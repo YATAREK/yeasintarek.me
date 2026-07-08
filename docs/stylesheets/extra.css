@@ -1,0 +1,126 @@
+/* ===========================================================================
+   Yeasin Tarek — custom theme
+   Warm, minimal, "reading-room" feel. Clay accent + serif display headings.
+   =========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap');
+
+/* ---- Accent (both schemes) ------------------------------------------------ */
+:root {
+  --clay:        #d97757;   /* Claude-ish warm clay */
+  --clay-deep:   #c15f3c;
+  --steel:       #7c8a9a;   /* cool secondary — nods to metals/materials */
+}
+
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color:        var(--clay);
+  --md-primary-fg-color--light: #e2916f;
+  --md-primary-fg-color--dark:  var(--clay-deep);
+  --md-primary-bg-color:        #ffffff;
+  --md-primary-bg-color--light: rgba(255,255,255,0.7);
+}
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color:         var(--clay-deep);
+  --md-accent-fg-color--transparent: rgba(217,119,87,0.1);
+}
+
+/* ---- Dark scheme: warm near-black instead of cold slate ------------------- */
+[data-md-color-scheme="slate"] {
+  --md-hue: 30;
+  --md-default-bg-color:        #1a1917;
+  --md-default-bg-color--light: #1f1d1b;
+  --md-default-fg-color:        #e8e4dd;
+  --md-default-fg-color--light: #c9c3b9;
+  --md-default-fg-color--lighter: #a8a199;
+  --md-code-bg-color:           #24221f;
+  --md-typeset-a-color:         var(--clay);
+  --md-footer-bg-color:         #141312;
+}
+[data-md-color-scheme="slate"] .md-header,
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: #141312;
+}
+
+/* ---- Light scheme: warm cream, not stark white --------------------------- */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color:        #f7f4ee;
+  --md-default-fg-color:        #2a2724;
+  --md-code-bg-color:           #efe9df;
+  --md-typeset-a-color:         var(--clay-deep);
+}
+[data-md-color-scheme="default"] .md-header,
+[data-md-color-scheme="default"] .md-tabs {
+  background-color: #2a2724;
+}
+
+/* ---- Typography: serif display, comfortable measure ---------------------- */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-nav__title,
+.md-header__title {
+  font-family: "Source Serif 4", Georgia, serif;
+  letter-spacing: -0.01em;
+}
+.md-typeset h1 { font-weight: 700; }
+.md-typeset h2 { font-weight: 600; margin-top: 2.2em; }
+.md-typeset { font-size: 0.82rem; line-height: 1.7; }
+.md-grid { max-width: 62rem; }   /* slightly tighter, book-like column */
+
+/* Accent rule under section headings */
+.md-typeset h2 {
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--md-default-fg-color--lighter);
+}
+
+/* ---- Home hero ----------------------------------------------------------- */
+.hero {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1rem 0 2.5rem;
+}
+.hero__portrait {
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--clay);
+  flex-shrink: 0;
+}
+.hero__body { flex: 1 1 320px; }
+.hero__body h1 { margin: 0 0 0.2em; }
+.hero__role {
+  color: var(--clay);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0 0 0.6em;
+}
+
+/* ---- Interest / focus chips ---------------------------------------------- */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.chip {
+  border: 1px solid var(--clay);
+  color: var(--clay);
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* ---- Buttons (built on Material's .md-button) ---------------------------- */
+.md-typeset .md-button--primary {
+  background-color: var(--clay);
+  border-color: var(--clay);
+  color: #fff;
+}
+.md-typeset .md-button--primary:hover {
+  background-color: var(--clay-deep);
+  border-color: var(--clay-deep);
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}

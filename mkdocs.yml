@@ -1,0 +1,92 @@
+site_name: Yeasin Tarek
+site_description: Materials scientist — research, publications, and notes.
+site_author: Yeasin Tarek
+site_url: https://yeasintarek.me/
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Research: research.md
+  - Publications: publications.md
+  - Blog:
+      - blog/index.md
+  - CV: cv.md
+  - Contact: contact.md
+
+plugins:
+  - search
+  - tags
+  - blog:
+      blog_toc: true
+      post_url_format: "{slug}"
+      post_excerpt: optional
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/YATAREK
+    - icon: fontawesome/brands/google-scholar
+      link: https://scholar.google.com/citations?user=B3c5GJQAAAAJ
+    - icon: fontawesome/brands/orcid
+      link: https://orcid.org/0000-0003-2113-2486
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/yatarek/
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
