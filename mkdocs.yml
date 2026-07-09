@@ -1,7 +1,7 @@
 site_name: Yeasin Tarek
 site_description: Materials scientist — research, publications, and notes.
 site_author: Yeasin Tarek
-site_url: https://yeasintarek.me/
+site_url: https://yatarek.github.io/
 
 theme:
   name: material
