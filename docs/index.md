@@ -5,7 +5,7 @@ hide:
 ---
 
 <div class="hero" markdown>
-<img class="hero__portrait" src="assets/portrait.jpeg" alt="Yeasin Tarek">
+<img class="hero__portrait" src="assets/profile.jpeg" alt="Yeasin Tarek">
 <div class="hero__body" markdown>
 
 # Yeasin Tarek
