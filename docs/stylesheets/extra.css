@@ -124,8 +124,6 @@
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
 }
-
-
 /* ---- Animated lattice logo (gentle breathing pulse) --------------------- */
 .lattice-logo .atom {
   transform-box: fill-box;
