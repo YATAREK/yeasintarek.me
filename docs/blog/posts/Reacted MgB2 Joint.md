@@ -4,7 +4,7 @@ categories:
   - Research
 tags:
   - superconductors
-  - MgB2
+  - MgB₂
   - MRI
 ---
 
