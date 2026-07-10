@@ -33,7 +33,7 @@ The problem is that MgB₂ is **brittle and chemically fussy**, which makes join
 
 ## Measuring success
 
-Whether a joint actually works comes down to one honest test: its **transport critical current (I_c)** — how much current it can carry before it stops behaving as a superconductor. It's a direct, unforgiving measure: either the joint works at the required current, or it doesn't.
+Whether a joint actually works comes down to one honest test: its **transport critical current** — how much current it can carry before it stops behaving as a superconductor. It's a direct, unforgiving measure: either the joint works at the required current, or it doesn't.
 
 ## The bigger picture
 
