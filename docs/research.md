@@ -6,7 +6,7 @@ imaging, and previously electrode materials for energy storage.
 
 ## Research interests
 
-- **Superconducting materials & joint technology** — fabricating MgB<sub>2</sub> and
+- **Superconducting materials & joint technology** — fabricating MgB<sub>2</sub> wire and
   developing practical joints for persistent-mode superconducting magnets.
 - **Energy storage materials** — hybrid supercapacitor electrodes and related
   nanomaterials.
@@ -70,5 +70,5 @@ I work across synthesis, fabrication, and a broad range of characterization meth
 
 === "Synthesis & processing"
 
-    - MgB<sub>2</sub> superconductor synthesis and reacted-joint fabrication
-    - Nanomaterial synthesis (hydroxide / oxide / rGO composites)
+    - MgB<sub>2</sub> superconductor synthesis and reacted-joint fabrication.
+    - Nanomaterial synthesis (Metal Oxides/hydroxides, Graphene), and electrode design.
