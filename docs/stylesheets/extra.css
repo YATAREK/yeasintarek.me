@@ -124,3 +124,21 @@
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
 }
+
+
+/* ---- Animated lattice logo (gentle breathing pulse) --------------------- */
+.lattice-logo .atom {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: atom-breathe 2.6s ease-in-out infinite;
+}
+.lattice-logo .atom-center {
+  animation-delay: 0.5s;
+}
+@keyframes atom-breathe {
+  0%, 100% { transform: scale(1);    opacity: 1;   }
+  50%      { transform: scale(1.28); opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lattice-logo .atom { animation: none; }
+}
