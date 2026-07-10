@@ -109,33 +109,29 @@
   font-weight: 500;
 }
 
-/* ---- Animated lattice logo (breathing + diagonal stretch) --------------- */
-.lattice-logo {
-  transform-origin: center;
-  animation: lattice-breathe 3s ease-in-out infinite;
-  overflow: visible;
+/* ---- Animated lattice logo (corner atoms stretch outward, in sequence) -- */
+.lattice-logo { overflow: visible; }
+
+/* frame stays still; each corner atom pushes out along its own diagonal */
+.lattice-logo .atom {
+  animation: atom-reach 2.8s ease-in-out infinite;
 }
-@keyframes lattice-breathe {
-  0%, 100% { transform: scale(0.9); }
-  50%      { transform: scale(1.12); }
+.lattice-logo .atom:nth-of-type(1) { transform-origin: 24px 24px; animation-delay: 0s;    }
+.lattice-logo .atom:nth-of-type(2) { transform-origin: 24px 24px; animation-delay: 0.35s; }
+.lattice-logo .atom:nth-of-type(4) { transform-origin: 24px 24px; animation-delay: 0.7s;  }
+.lattice-logo .atom:nth-of-type(3) { transform-origin: 24px 24px; animation-delay: 1.05s; }
+
+@keyframes atom-reach {
+  0%, 70%, 100% { transform: translate(0, 0);        }
+  35%           { transform: translate(var(--dx), var(--dy)); }
 }
-/* corner atoms push outward along their diagonals */
-.lattice-logo .atom { animation: atom-pull 3s ease-in-out infinite; }
-.lattice-logo .atom:nth-of-type(1) { transform-origin: 12px 12px; }
-.lattice-logo .atom:nth-of-type(2) { transform-origin: 36px 12px; }
-.lattice-logo .atom:nth-of-type(3) { transform-origin: 12px 36px; }
-.lattice-logo .atom:nth-of-type(4) { transform-origin: 36px 36px; }
-@keyframes atom-pull {
-  0%, 100% { r: 3.4; }
-  50%      { r: 4.6; }
-}
-.lattice-logo .atom-center {
-  animation: center-pulse 3s ease-in-out infinite;
-}
-@keyframes center-pulse {
-  0%, 100% { r: 4.2; opacity: 1;   }
-  50%      { r: 5.4; opacity: 0.85; }
-}
+.lattice-logo .atom:nth-of-type(1) { --dx: -3px; --dy: -3px; } /* top-left  */
+.lattice-logo .atom:nth-of-type(2) { --dx:  3px; --dy: -3px; } /* top-right */
+.lattice-logo .atom:nth-of-type(3) { --dx: -3px; --dy:  3px; } /* bottom-left  */
+.lattice-logo .atom:nth-of-type(4) { --dx:  3px; --dy:  3px; } /* bottom-right */
+
+/* center atom holds as the anchor */
 @media (prefers-reduced-motion: reduce) {
-  .lattice-logo, .lattice-logo .atom, .lattice-logo .atom-center { animation: none; }
+  .lattice-logo .atom { animation: none; }
+}atom-center { animation: none; }
 }
