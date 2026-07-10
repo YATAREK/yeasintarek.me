@@ -109,34 +109,33 @@
   font-weight: 500;
 }
 
-/* ---- Buttons (built on Material's .md-button) ---------------------------- */
-.md-typeset .md-button--primary {
-  background-color: var(--clay);
-  border-color: var(--clay);
-  color: #fff;
-}
-.md-typeset .md-button--primary:hover {
-  background-color: var(--clay-deep);
-  border-color: var(--clay-deep);
-}
-
-/* ---- Reduced motion ------------------------------------------------------ */
-@media (prefers-reduced-motion: reduce) {
-  * { scroll-behavior: auto !important; }
-}
-/* ---- Animated lattice logo (gentle breathing pulse) --------------------- */
-.lattice-logo .atom {
-  transform-box: fill-box;
+/* ---- Animated lattice logo (breathing + diagonal stretch) --------------- */
+.lattice-logo {
   transform-origin: center;
-  animation: atom-breathe 2.6s ease-in-out infinite;
+  animation: lattice-breathe 3s ease-in-out infinite;
+  overflow: visible;
+}
+@keyframes lattice-breathe {
+  0%, 100% { transform: scale(0.9); }
+  50%      { transform: scale(1.12); }
+}
+/* corner atoms push outward along their diagonals */
+.lattice-logo .atom { animation: atom-pull 3s ease-in-out infinite; }
+.lattice-logo .atom:nth-of-type(1) { transform-origin: 12px 12px; }
+.lattice-logo .atom:nth-of-type(2) { transform-origin: 36px 12px; }
+.lattice-logo .atom:nth-of-type(3) { transform-origin: 12px 36px; }
+.lattice-logo .atom:nth-of-type(4) { transform-origin: 36px 36px; }
+@keyframes atom-pull {
+  0%, 100% { r: 3.4; }
+  50%      { r: 4.6; }
 }
 .lattice-logo .atom-center {
-  animation-delay: 0.5s;
+  animation: center-pulse 3s ease-in-out infinite;
 }
-@keyframes atom-breathe {
-  0%, 100% { transform: scale(1);    opacity: 1;   }
-  50%      { transform: scale(1.28); opacity: 0.85; }
+@keyframes center-pulse {
+  0%, 100% { r: 4.2; opacity: 1;   }
+  50%      { r: 5.4; opacity: 0.85; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lattice-logo .atom { animation: none; }
+  .lattice-logo, .lattice-logo .atom, .lattice-logo .atom-center { animation: none; }
 }
