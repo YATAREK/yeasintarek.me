@@ -48,9 +48,9 @@ materials I worked on earlier in my career.
 
 ## Currently
 
-- 🔬 Devoloping the superconducting MgB<sub>2</sub> joints technology for an MRI industry
-- 🧪 Devoloping a machine learning (ML)-driven study on the high entropy superconductor
-- ⚡ Exploring the possibility of conducting an inverse design for existing ML studies
+- 🔬 Devoloping the superconducting MgB<sub>2</sub> joint fabrication technology for persistent mode MRI.
+- 🧪 Conducting a machine learning (ML)-driven study on the high entropy superconductor.
+- ⚡ Exploring the possibility of conducting an inverse design for predicting the stable inorganic functional materials.
 
 ## Get in touch
 
