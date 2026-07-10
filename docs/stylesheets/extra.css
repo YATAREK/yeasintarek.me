@@ -109,21 +109,25 @@
   font-weight: 500;
 }
 
-/* ---- Animated lattice logo (corners + arms reach outward, in sequence) -- */
+/* ---- Animated lattice logo (relay: one corner reaches out, then the next) */
 .lattice-logo { overflow: visible; }
 
 .lattice-logo .corner {
   transform-box: fill-box;
-  animation: corner-reach 2.8s ease-in-out infinite;
+  transform-origin: 24px 24px;
+  animation: corner-relay 4s ease-in-out infinite;
 }
-.lattice-logo .corner-tl { transform-origin: 24px 24px; animation-delay: 0s;    --dx: -3px; --dy: -3px; }
-.lattice-logo .corner-tr { transform-origin: 24px 24px; animation-delay: 0.35s; --dx:  3px; --dy: -3px; }
-.lattice-logo .corner-br { transform-origin: 24px 24px; animation-delay: 0.7s;  --dx:  3px; --dy:  3px; }
-.lattice-logo .corner-bl { transform-origin: 24px 24px; animation-delay: 1.05s; --dx: -3px; --dy:  3px; }
+.lattice-logo .corner-tl { animation-delay: 0s;   --dx: -4px; --dy: -4px; }
+.lattice-logo .corner-tr { animation-delay: 1s;   --dx:  4px; --dy: -4px; }
+.lattice-logo .corner-br { animation-delay: 2s;   --dx:  4px; --dy:  4px; }
+.lattice-logo .corner-bl { animation-delay: 3s;   --dx: -4px; --dy:  4px; }
 
-@keyframes corner-reach {
-  0%, 70%, 100% { transform: translate(0, 0); }
-  35%           { transform: translate(var(--dx), var(--dy)); }
+/* full cycle = 4s; each corner reaches out and returns within its own 1s quarter */
+@keyframes corner-relay {
+  0%    { transform: translate(0, 0); }
+  12.5% { transform: translate(var(--dx), var(--dy)); }
+  25%   { transform: translate(0, 0); }
+  100%  { transform: translate(0, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
