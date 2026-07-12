@@ -1,6 +1,6 @@
 # CV
 
-[Download PDF](assets/cv.pdf){ .md-button .md-button--primary }
+[Download PDF](assets/Yeasin_Tarek_Resume_PsiQuantum.pdf){ .md-button .md-button--primary }
 
 ## Summary
 
