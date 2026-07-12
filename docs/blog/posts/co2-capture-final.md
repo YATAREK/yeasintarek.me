@@ -26,7 +26,7 @@ In the air around you right now, roughly **four molecules in every ten thousand*
 
 Now compare that with the exhaust pouring out of a coal power station, where around **1,200 in every ten thousand** are CO₂.
 
-![Two grids of ten thousand dots, showing how much rarer CO₂ is in ordinary air than in a smokestack](../../assets/figures/simple1-needle.svg)
+![Two grids of ten thousand dots, showing how much rarer CO₂ is in ordinary air than in a smokestack](../../assets/simple1-needle.svg)
 
 Sit with those two pictures for a moment, because they explain almost everything that follows — the costs, the arguments, the failures.
 
@@ -47,7 +47,7 @@ The grabbing is done by a material — sometimes a liquid, sometimes a solid —
 
 Then you have to get it back out. Usually you heat the sponge. The bonds break, pure CO₂ streams off, and the sponge is ready to work again.
 
-![Three-step diagram: air passes through a porous material, CO₂ sticks, heating releases it, and the material is reused](../../assets/figures/simple2-catch-release.svg)
+![Three-step diagram: air passes through a porous material, CO₂ sticks, heating releases it, and the material is reused](../../assets/simple2-catch-release.svg)
 
 That heating step is where the money goes. It is also where the whole field lives or dies — because **you have to do it again, and again, and again.**
 
