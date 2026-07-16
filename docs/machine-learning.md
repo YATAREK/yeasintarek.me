@@ -22,7 +22,7 @@ The best model (Extra Trees) achieves an R² of 0.60 under cross-validation —
 enough to rank candidates and guide experimental priorities, though not a
 substitute for measurement.
 
-**[→ Tc Prediction Tool](hes-tc-predictor/index.html)**{ .md-button }
+[→ Tc Prediction Tool](hes-tc-predictor/index.html){ .md-button }
 
 Enter any multi-component alloy formula and get an instant Tc estimate across
 all six models, with parity plots and a cryogenic-scale visualisation.
