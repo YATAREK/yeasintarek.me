@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HES Tc Predictor</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
+<style>
+  /* ============================================================
+     Palette: cryogenic lab. Deep cold blue-black, with an electric
+     "zero-resistance" cyan as the one bold accent, and a warm amber
+     that stands for the resistive (above-Tc) state.
+     ============================================================ */
+  :root{
+    --bg:#070B15; --panel:#0E1626; --panel-2:#15213A;
+    --line:rgba(124,156,214,.14); --line-strong:rgba(124,156,214,.28);
+    --ink:#E8EEF9; --muted:#8595B4; --faint:#5D6C8C;
+    --sc:#37E5D4; --sc-dim:#1C7E77; --warm:#F4A64B; --danger:#FF6B6B;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 78% -8%, rgba(55,229,212,.10), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+    padding:clamp(18px,4vw,48px);
+  }
+  .wrap{max-width:1060px;margin:0 auto}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--sc);margin:0 0 10px;
+  }
+  h1{
+    font-family:"Space Grotesk",sans-serif;font-weight:700;
+    font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0 0 10px;
+    letter-spacing:-.02em;
+  }
+  h1 .zero{color:var(--sc)}
+  header p{color:var(--muted);max-width:60ch;margin:0}
+
+  /* ---------- layout ---------- */
+  .grid{display:grid;grid-template-columns:minmax(0,360px) 1fr;gap:20px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .panel{
+    background:linear-gradient(180deg,var(--panel),#0B1220);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;
+  }
+  .panel h2{
+    font-family:"Space Grotesk",sans-serif;font-size:13px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+    margin:0 0 16px;
+  }
+
+  /* ---------- controls ---------- */
+  label.field{display:block;margin-bottom:16px}
+  .field span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .inrow{display:flex;gap:8px}
+  input[type=text],select{
+    width:100%;background:var(--panel-2);border:1px solid var(--line-strong);
+    color:var(--ink);border-radius:10px;padding:11px 13px;font-size:15px;
+    font-family:"IBM Plex Mono",monospace;
+  }
+  input[type=text]:focus,select:focus{
+    outline:none;border-color:var(--sc);box-shadow:0 0 0 3px rgba(55,229,212,.16);
+  }
+  select{cursor:pointer;font-family:"Inter",sans-serif}
+  button{
+    font-family:"Inter",sans-serif;font-weight:600;cursor:pointer;
+    border-radius:10px;border:1px solid transparent;transition:.15s;
+  }
+  .btn-ghost{
+    background:var(--panel-2);border-color:var(--line-strong);color:var(--ink);
+    padding:0 14px;white-space:nowrap;
+  }
+  .btn-ghost:hover{border-color:var(--sc);color:var(--sc)}
+  .btn-primary{
+    background:var(--sc);color:#04201D;width:100%;padding:13px;font-size:15px;
+    margin-top:4px;
+  }
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;filter:none}
+
+  /* ---------- result ---------- */
+  .result{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+  .tc-value{
+    font-family:"IBM Plex Mono",monospace;font-weight:600;
+    font-size:clamp(40px,9vw,58px);line-height:1;color:var(--sc);
+    letter-spacing:-.01em;
+  }
+  .tc-value .k{font-size:.42em;color:var(--muted);margin-left:6px}
+  .tc-sub{color:var(--muted);font-size:13px;margin-top:8px;min-height:18px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.04em;
+    padding:5px 9px;border-radius:999px;border:1px solid var(--line-strong);
+    color:var(--muted);
+  }
+  .tag.on{border-color:var(--sc);color:var(--sc);background:rgba(55,229,212,.08)}
+  .tag.off{color:var(--faint)}
+
+  /* ---------- cryo scale (signature element) ----------
+     A horizontal cryogenic axis. Everything left of the predicted Tc is the
+     zero-resistance (superconducting) region; the coolant ticks tell you at a
+     glance whether the alloy would carry current in liquid He / H2 / N2.     */
+  .cryo{margin-top:18px}
+  .cryo svg{width:100%;height:74px;display:block}
+
+  /* ---------- metrics ---------- */
+  .metrics{display:flex;gap:10px;margin:2px 0 16px;flex-wrap:wrap}
+  .metric{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:9px 14px;flex:1;min-width:96px;
+  }
+  .metric b{
+    display:block;font-family:"IBM Plex Mono",monospace;font-size:19px;
+    color:var(--ink);
+  }
+  .metric small{color:var(--faint);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .chart{width:100%;height:340px}
+  .chart+.chart{margin-top:8px}
+
+  .note{color:var(--faint);font-size:12.5px;margin-top:22px;line-height:1.6}
+  .banner{
+    display:none;background:rgba(255,107,107,.1);border:1px solid var(--danger);
+    color:#ffd7d7;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:14px;
+  }
+  a{color:var(--sc)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Forward design · machine learning</p>
+    <h1>High-entropy superconductor<br><span class="zero">Tc</span> predictor</h1>
+    <p>Enter (or roll) a high-entropy-alloy composition, pick a trained model,
+       and estimate its superconducting critical temperature. Models are trained
+       on the HES dataset and evaluated by cross-validation.</p>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="grid">
+    <!-- ================= controls / result ================= -->
+    <section class="panel">
+      <h2>Composition</h2>
+
+      <label class="field">
+        <span>High-entropy alloy formula</span>
+        <div class="inrow">
+          <input id="formula" type="text" value="NbTaTiZrHf" spellcheck="false" />
+          <button class="btn-ghost" id="rand" title="Roll a random HES">Roll</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Model</span>
+        <select id="model"></select>
+      </label>
+
+      <button class="btn-primary" id="predict">Predict Tc</button>
+
+      <div class="result">
+        <div class="tc-value"><span id="tc">—</span><span class="k">K</span></div>
+        <div class="tc-sub" id="tcSub">No prediction yet.</div>
+        <div class="tags" id="tags"></div>
+        <div class="cryo"><svg id="cryo" viewBox="0 0 340 74" preserveAspectRatio="none"></svg></div>
+      </div>
+    </section>
+
+    <!-- ================= model quality / charts ================= -->
+    <section class="panel">
+      <h2>Model performance <span id="mName" style="color:var(--muted)"></span></h2>
+      <div class="metrics" id="metrics"></div>
+      <div id="parity" class="chart"></div>
+      <div id="dist" class="chart"></div>
+      <p class="note">
+        <b>Parity</b> shows out-of-fold cross-validated predictions vs. measured Tc
+        (the dashed line is perfect agreement). <b>Distribution</b> shows the Tc of
+        every alloy in the training set; your prediction drops in as a vertical marker.
+      </p>
+    </section>
+  </div>
+
+  <p class="note">
+    Predictions come from a small inference API (featurization runs there, since
+    GitHub Pages is static). Set <code>API_BASE</code> at the top of this file to
+    your deployed backend URL. Tc estimates are model outputs on a limited dataset,
+    not measured values.
+  </p>
+</div>
+
+<script>
+/* ================= CONFIG =================
+   Point this at your deployed FastAPI backend.
+   Hugging Face Space URL format:  https://<owner>-<space>.hf.space
+   (find the exact URL on your Space page — "..." menu → Embed / Direct URL).
+   Replace the value below with YOUR Space URL. For local testing use
+   "http://localhost:8000".                                            */
+const API_BASE = "https://ml-project-sfos.onrender.com";
+/* ========================================= */
+
+const $ = id => document.getElementById(id);
+const COLORS = { sc:"#37E5D4", warm:"#F4A64B", ink:"#E8EEF9", muted:"#8595B4",
+                 faint:"#5D6C8C", line:"rgba(124,156,214,.18)" };
+const PLOT_LAYOUT = {
+  paper_bgcolor:"transparent", plot_bgcolor:"transparent",
+  font:{ color:COLORS.muted, family:"Inter, sans-serif", size:12 },
+  margin:{ l:52, r:16, t:10, b:44 },
+};
+const CFG = { displayModeBar:false, responsive:true };
+
+let META = null;
+let lastPrediction = null;
+
+/* ---------- boot ---------- */
+async function boot(){
+  try{
+    const r = await fetch(`${API_BASE}/meta`);
+    if(!r.ok) throw new Error(`meta ${r.status}`);
+    META = await r.json();
+  }catch(e){
+    showBanner(`Can't reach the prediction API at <code>${API_BASE}</code>. `
+      + `Start the backend or edit <code>API_BASE</code> in this file.`);
+    return;
+  }
+  const sel = $("model");
+  sel.innerHTML = META.models
+    .map(m => `<option value="${m.id}">${m.label}</option>`).join("");
+  sel.onchange = onModelChange;
+  onModelChange();
+  drawDistribution();
+}
+
+function showBanner(html){ const b=$("banner"); b.innerHTML=html; b.style.display="block"; }
+
+/* ---------- model change: metrics + parity ---------- */
+function onModelChange(){
+  const id = $("model").value;
+  const m = META.models.find(x => x.id === id);
+  $("mName").textContent = `· ${m.label}`;
+  $("metrics").innerHTML = ["MAE","RMSE","R2"].map(k =>
+    `<div class="metric"><b>${m.metrics[k]}</b><small>${k==="R2"?"R²":k+" (K)"}</small></div>`
+  ).join("");
+  drawParity(id);
+}
+
+function drawParity(id){
+  const p = META.parity[id];
+  const lo = Math.min(...p.actual, ...p.predicted);
+  const hi = Math.max(...p.actual, ...p.predicted);
+  const pad = (hi - lo) * 0.06 || 1;
+  Plotly.react("parity", [
+    { x:[lo-pad,hi+pad], y:[lo-pad,hi+pad], mode:"lines", hoverinfo:"skip",
+      line:{ color:COLORS.faint, dash:"dash", width:1.5 }, showlegend:false },
+    { x:p.actual, y:p.predicted, mode:"markers", name:"CV prediction",
+      marker:{ color:COLORS.sc, size:8, opacity:.8,
+               line:{ color:"#04201D", width:1 } },
+      hovertemplate:"actual %{x:.2f} K<br>pred %{y:.2f} K<extra></extra>" },
+  ], {
+    ...PLOT_LAYOUT,
+    xaxis:{ title:"Measured Tc (K)", gridcolor:COLORS.line, zeroline:false,
+            range:[lo-pad,hi+pad] },
+    yaxis:{ title:"Predicted Tc (K)", gridcolor:COLORS.line, zeroline:false,
+            range:[lo-pad,hi+pad] },
+    showlegend:false,
+  }, CFG);
+}
+
+/* ---------- Tc distribution + prediction marker ---------- */
+function drawDistribution(){
+  const data = [{
+    x:META.tc_distribution, type:"histogram", name:"dataset",
+    marker:{ color:"rgba(55,229,212,.35)", line:{ color:COLORS.sc, width:1 } },
+    hovertemplate:"%{y} alloys<br>%{x} K<extra></extra>",
+  }];
+  const layout = {
+    ...PLOT_LAYOUT,
+    bargap:.04,
+    xaxis:{ title:"Tc (K)", gridcolor:COLORS.line, zeroline:false },
+    yaxis:{ title:"count", gridcolor:COLORS.line, zeroline:false },
+    shapes:[], annotations:[],
+  };
+  if(lastPrediction!=null){
+    layout.shapes.push({ type:"line", x0:lastPrediction, x1:lastPrediction,
+      yref:"paper", y0:0, y1:1, line:{ color:COLORS.warm, width:2.5 } });
+    layout.annotations.push({ x:lastPrediction, yref:"paper", y:1,
+      text:`prediction ${lastPrediction.toFixed(1)} K`, showarrow:false,
+      yanchor:"bottom", font:{ color:COLORS.warm, size:11 } });
+  }
+  Plotly.react("dist", data, layout, CFG);
+}
+
+/* ---------- cryogenic scale (signature) ---------- */
+function drawCryo(tc){
+  const W=340, H=74, x0=8, x1=332, axisY=44;
+  const top = Math.max(30, tc*1.25);          // keep small Tc legible
+  const X = k => x0 + (x1-x0) * Math.min(k,top)/top;
+  const coolants = [
+    {k:4.2,  label:"LHe"}, {k:20.3, label:"LH₂"}, {k:77,  label:"LN₂"},
+  ].filter(c => c.k <= top);
+
+  const ticks = coolants.map(c => `
+    <line x1="${X(c.k)}" x2="${X(c.k)}" y1="${axisY-7}" y2="${axisY+7}"
+          stroke="${COLORS.faint}" stroke-width="1"/>
+    <text x="${X(c.k)}" y="${axisY+22}" fill="${COLORS.faint}"
+          font-size="9" font-family="IBM Plex Mono" text-anchor="middle">${c.label} ${c.k}K</text>
+  `).join("");
+
+  const px = X(tc);
+  $("cryo").innerHTML = `
+    <defs>
+      <linearGradient id="scg" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="${COLORS.sc}" stop-opacity=".55"/>
+        <stop offset="1" stop-color="${COLORS.sc}" stop-opacity=".12"/>
+      </linearGradient>
+    </defs>
+    <rect x="${x0}" y="${axisY-5}" width="${px-x0}" height="10" rx="5" fill="url(#scg)"/>
+    <line x1="${x0}" x2="${x1}" y1="${axisY}" y2="${axisY}"
+          stroke="${COLORS.line}" stroke-width="1"/>
+    ${ticks}
+    <line x1="${px}" x2="${px}" y1="10" y2="${axisY+8}" stroke="${COLORS.sc}" stroke-width="2"/>
+    <circle cx="${px}" cy="10" r="4" fill="${COLORS.sc}"/>
+    <text x="${px}" y="8" fill="${COLORS.sc}" font-size="10"
+          font-family="IBM Plex Mono" text-anchor="middle">${tc.toFixed(1)}K</text>
+    <text x="${x0}" y="8" fill="${COLORS.faint}" font-size="9" font-family="IBM Plex Mono">0K</text>
+    <text x="${x1}" y="8" fill="${COLORS.faint}" font-size="9"
+          font-family="IBM Plex Mono" text-anchor="end">superconducting ← | → resistive</text>
+  `;
+}
+
+/* ---------- actions ---------- */
+$("rand").onclick = async () => {
+  try{
+    const r = await fetch(`${API_BASE}/random_hes`);
+    const j = await r.json();
+    $("formula").value = j.formula;
+  }catch(e){ showBanner("Couldn't fetch a random HES from the API."); }
+};
+
+$("predict").onclick = async () => {
+  const formula = $("formula").value.trim();
+  const model = $("model").value;
+  if(!formula) return;
+  const btn = $("predict");
+  btn.disabled = true; btn.textContent = "Predicting…";
+  try{
+    const r = await fetch(`${API_BASE}/predict`, {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ formula, model }),
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.detail || "prediction failed");
+
+    $("tc").textContent = j.tc.toFixed(2);
+    $("tcSub").textContent =
+      `${j.formula} · dataset range ${j.dataset_tc_min}–${j.dataset_tc_max} K`;
+    $("tags").innerHTML = [
+      ["Above liquid He (4.2 K)", j.above_liquid_helium],
+      ["Above liquid N₂ (77 K)",  j.above_liquid_nitrogen],
+    ].map(([t,on]) =>
+      `<span class="tag ${on?"on":"off"}">${on?"✓":"✕"} ${t}</span>`).join("");
+
+    lastPrediction = j.tc;
+    drawCryo(j.tc);
+    drawDistribution();
+  }catch(e){
+    $("tcSub").textContent = "Error: " + e.message;
+  }finally{
+    btn.disabled = false; btn.textContent = "Predict Tc";
+  }
+};
+
+boot();
+</script>
+</body>
+</html>
