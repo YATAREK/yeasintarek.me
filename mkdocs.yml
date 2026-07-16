@@ -43,9 +43,9 @@ nav:
   - Home: index.md
   - Research: research.md
   - Publications: publications.md
+  - Machine Learning: machine-learning.md
   - Blog:
       - blog/index.md
-  - CV: cv.md
   - Contact: contact.md
 
 plugins:
