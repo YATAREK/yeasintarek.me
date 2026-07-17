@@ -33,3 +33,5 @@ The combination is the key contribution: the phase gate filters out
 compositions unlikely to form a stable single-phase alloy before Tc is
 predicted, reducing misleading estimates and focusing attention on
 experimentally viable candidates.
+
+[→ Tc Prediction Tool](hes-tc-predictor/index.html){ .md-button }
