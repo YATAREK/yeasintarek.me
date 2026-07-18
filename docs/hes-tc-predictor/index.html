@@ -255,11 +255,34 @@ const CFG = { displayModeBar:false, responsive:true };
 let META = null;
 let lastPrediction = null;
 
+async function fetchJson(url, options = {}, retries = 2){
+  let lastError = null;
+  for(let attempt = 0; attempt <= retries; attempt++){
+    try{
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+      const text = await response.text();
+      if(!response.ok){
+        let detail = text;
+        try{ detail = JSON.parse(text).detail || JSON.parse(text).error || text; }
+        catch(e){}
+        throw new Error(detail || `request failed (${response.status})`);
+      }
+      return JSON.parse(text);
+    }catch(e){
+      lastError = e;
+      if(attempt === retries) throw e;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 async function boot(){
   try{
-    const r = await fetch(`${API_BASE}/meta`);
-    if(!r.ok) throw new Error(`meta ${r.status}`);
-    META = await r.json();
+    META = await fetchJson(`${API_BASE}/meta`);
   }catch(e){
     showBanner(`Can't reach the prediction API at <code>${API_BASE}</code>. `
       + `The free-tier server may be waking up — try again in 30 seconds.`);
@@ -403,8 +426,7 @@ function renderPhase(j){
 /* ---------- actions ---------- */
 $("rand").onclick = async () => {
   try{
-    const r = await fetch(`${API_BASE}/random_hes`);
-    const j = await r.json();
+    const j = await fetchJson(`${API_BASE}/random_hes`);
     $("formula").value = j.formula;
   }catch(e){ showBanner("Couldn't fetch a random HES from the API."); }
 };
@@ -416,12 +438,10 @@ $("predict").onclick = async () => {
   const btn = $("predict");
   btn.disabled = true; btn.textContent = "Predicting\u2026";
   try{
-    const r = await fetch(`${API_BASE}/predict`, {
+    const j = await fetchJson(`${API_BASE}/predict`, {
       method:"POST", headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({ formula, model }),
     });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.detail || "prediction failed");
 
     // Stage 1: Phase
     renderPhase(j);
