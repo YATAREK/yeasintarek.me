@@ -44,6 +44,7 @@ nav:
   - Research: research.md
   - Publications: publications.md
   - Machine Learning: machine-learning.md
+  - Micro-CT: micro-ct.md
   - Blog:
       - blog/index.md
   - Contact: contact.md
