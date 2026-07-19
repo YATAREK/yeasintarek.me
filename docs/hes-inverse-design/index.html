@@ -333,14 +333,13 @@ function renderResults(data){
 
   let html = `<table class="inv-table"><thead><tr>
     <th>#</th><th>Formula</th><th>Tc (K)</th><th>± (K)</th>
-    <th>P(BCC)</th><th>VEC</th><th>Score</th><th>Novel</th><th>Checks</th><th></th>
+    <th>P(BCC)</th><th>VEC</th><th>Score</th><th>Reliability</th><th>Novel</th><th></th>
   </tr></thead><tbody>`;
 
   data.results.forEach((r, i) => {
-    const checks = Object.values(r.checks);
-    const checkStr = checks.map(c => c
-      ? '<span class="check-pass">&#10003;</span>'
-      : '<span class="check-fail">&#10007;</span>').join("");
+    const ph = r.physics || {};
+    const relColor = ph.level === "high" ? "var(--sc)" : ph.level === "medium" ? "var(--warm)" : "var(--danger)";
+    const relLabel = ph.reliability !== undefined ? `${(ph.reliability*100).toFixed(0)}%` : "—";
 
     html += `<tr class="data-row" data-idx="${i}" style="cursor:pointer">
       <td class="rank">${r.rank}</td>
@@ -350,26 +349,33 @@ function renderResults(data){
       <td>${r.p_bcc.toFixed(3)}</td>
       <td>${r.vec.toFixed(1)}</td>
       <td>${r.score.toFixed(3)}</td>
+      <td style="color:${relColor};font-weight:600">${relLabel}</td>
       <td class="${r.is_novel?'novel-yes':'novel-no'}">${r.is_novel?'&#10003; Novel':'&#10007; Known'}</td>
-      <td>${checkStr}</td>
       <td style="color:var(--muted)" class="toggle">&#9660;</td>
     </tr>`;
 
     const models = Object.entries(r.model_predictions||{})
       .map(([k,v]) => `<dd>${k}: ${v.toFixed(3)} K</dd>`).join("");
 
+    const flags = (ph.flags || []).map(f => `<dd style="color:var(--muted)">• ${f}</dd>`).join("");
+
     html += `<tr class="expand-row" id="exp-${i}">
       <td colspan="10" class="expand-cell"><div class="expand-detail">
         <dl>
           <dt>Composition</dt><dd>${r.formula} (${r.n_elements} elements, equimolar)</dd>
-          <dt>VEC</dt><dd>${r.vec.toFixed(2)}</dd>
+          <dt>VEC</dt><dd>${r.vec.toFixed(2)} (optimum: 4.67)</dd>
           <dt>&#948; (size mismatch)</dt><dd>${r.delta.toFixed(2)}%</dd>
           <dt>P(BCC)</dt><dd>${(r.p_bcc*100).toFixed(1)}%</dd>
           <dt>95% CI</dt><dd>${r.tc_95_lo.toFixed(2)} &ndash; ${r.tc_95_hi.toFixed(2)} K</dd>
+          <dt>Nb fraction</dt><dd>${ph.nb_fraction !== undefined ? (ph.nb_fraction*100).toFixed(1)+'%' : '—'}</dd>
+          <dt>Nb+Ta fraction</dt><dd>${ph.nb_ta_fraction !== undefined ? (ph.nb_ta_fraction*100).toFixed(1)+'%' : '—'}</dd>
         </dl>
         <dl>
           <dt>Model Predictions</dt>${models}
           <dt>Nearest Training</dt><dd>${r.nearest_training||'N/A'} (element distance = ${r.nearest_dist})</dd>
+          <dt>Physics Assessment</dt>
+          <dd style="color:${relColor};font-weight:600">${ph.level ? ph.level.toUpperCase() : '—'} reliability (${relLabel})</dd>
+          ${flags}
         </dl>
       </div></td>
     </tr>`;
