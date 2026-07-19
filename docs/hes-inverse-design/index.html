@@ -322,8 +322,12 @@ function renderResults(data){
   ].map(([l,v]) => `<div class="inv-stat"><b>${v}</b><small>${l}</small></div>`).join("");
 
   if(!data.results.length){
-    $("inv-results").innerHTML = `<p style="color:var(--warm);text-align:center;padding:30px">
-      No candidates passed all checks. Try relaxing thresholds (lower P(BCC), higher σ).</p>`;
+    const msg = data.mode === "target"
+      ? `No candidates found with predicted Tc within ±${data.tc_window} K of ${data.tc_target} K. `
+        + `The current element pool does not produce verified alloys in this temperature range. `
+        + `Try: widening the Tc window, changing the target, or switching to "Range" mode.`
+      : `No candidates passed all verification checks. Try relaxing thresholds (lower P(BCC), higher σ, wider VEC range).`;
+    $("inv-results").innerHTML = `<p style="color:var(--warm);text-align:center;padding:30px">${msg}</p>`;
     return;
   }
 
