@@ -35,3 +35,36 @@ predicted, reducing misleading estimates and focusing attention on
 experimentally viable candidates.
 
 [→ Tc Prediction Tool](hes-tc-predictor/index.html){ .md-button }
+
+---
+
+## Inverse Design for Predicting High-Tc HES Compositions
+
+The forward predictor answers "what is the Tc of this alloy?" — but the
+experimentalist's real question is the inverse: "which alloys will superconduct
+near my target temperature?" We built an inverse design pipeline that
+systematically screens the HEA composition space and returns verified candidates.
+
+**How it works:**
+
+1. **Enumerate** all equimolar 4-, 5-, and 6-element combinations from a pool
+   of 10 refractory metals (Nb, Ta, Ti, Zr, Hf, V, Mo, W, Re, Ru) — 672
+   candidates total.
+2. **Phase gate** — filter to compositions with P(BCC) ≥ 0.7 using the
+   11,247-sample phase classifier.
+3. **Multi-model Tc prediction** — all 6 trained models predict each candidate
+   independently.
+4. **5-check verification gate** — every candidate must pass ALL checks before
+   display:
+    - Phase stability (P_BCC ≥ threshold)
+    - Cross-model agreement (σ ≤ 2.0 K)
+    - Physical bounds (Tc within search range)
+    - VEC range validation (3.5–7.5)
+    - Novelty check (not already in training data)
+5. **Score & rank** — candidates are ranked by a composite score weighting
+   proximity to target, phase stability, and prediction confidence.
+
+The user enters a target Tc and adjustable thresholds; the system returns the
+top 10 most promising verified compositions in under 5 seconds.
+
+[→ Inverse Design Tool](hes-inverse-design/index.html){ .md-button }
