@@ -68,3 +68,34 @@ The user enters a target Tc and adjustable thresholds; the system returns the
 top 10 most promising verified compositions in under 5 seconds.
 
 [→ Inverse Design Tool](hes-inverse-design/index.html){ .md-button }
+
+---
+
+## Carbon Supercapacitor Inverse Design
+
+Supercapacitor performance depends on a complex interplay of electrode
+physicochemical properties — surface area, pore geometry, heteroatom doping,
+and testing conditions. We built a physics-informed ML system that both
+predicts specific capacitance from electrode features and solves the inverse
+problem: given a target capacitance, what electrode parameters should be
+synthesised?
+
+**Forward model — Physics-Informed GPR.** A Gaussian Process Regressor with
+a custom kernel encoding the Gouy-Chapman-Stern prior (capacitance ∝ SSA)
+predicts specific capacitance (F/g) with calibrated uncertainty estimates.
+A Gradient Boosting model serves as benchmark and enables SHAP-based feature
+importance validation against known electrochemistry.
+
+**Inverse design — Bayesian Optimisation.** The GPR posterior is used as the
+surrogate in a Bayesian Optimisation loop with Expected Improvement
+acquisition. Given a target capacitance, the system searches the
+physicochemical parameter space under physical constraints (SSA_micro ≤ SSA,
+pore size ≥ 0.3 nm) and returns the top electrode material configurations
+most likely to achieve the target.
+
+**Physics-backed feature engineering:** Seven derived features grounded in
+EDLC theory (micropore fraction, pore density proxy, SSA–N synergy,
+heteroatom total, defect-surface coupling, window², rate penalty) augment
+the raw inputs and improve interpretability.
+
+[→ Supercapacitor Design Tool](supercapacitor-design/index.html){ .md-button }
