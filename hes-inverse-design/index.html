@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HES Inverse Design — Find Superconductors by Target Tc</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#070B15; --panel:#0E1626; --panel-2:#15213A;
+    --line:rgba(124,156,214,.14); --line-strong:rgba(124,156,214,.28);
+    --ink:#E8EEF9; --muted:#8595B4; --faint:#5D6C8C;
+    --sc:#37E5D4; --sc-dim:#1C7E77; --warm:#F4A64B; --danger:#FF6B6B;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 78% -8%, rgba(55,229,212,.10), transparent 60%),
+      radial-gradient(800px 400px at 20% 100%, rgba(244,166,75,.06), transparent 50%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+    padding:clamp(18px,4vw,48px);
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+
+  header{margin-bottom:32px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--sc);margin:0 0 10px;
+  }
+  h1{
+    font-family:"Space Grotesk",sans-serif;font-weight:700;
+    font-size:clamp(26px,5vw,40px);line-height:1.1;margin:0 0 12px;
+    letter-spacing:-.02em;
+  }
+  h1 .accent{color:var(--sc)}
+  header p{color:var(--muted);max-width:64ch;margin:0;font-size:15px}
+
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .panel{
+    background:linear-gradient(180deg,var(--panel),#0B1220);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;
+  }
+  .panel h2{
+    font-family:"Space Grotesk",sans-serif;font-size:13px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+    margin:0 0 16px;
+  }
+
+  label.field{display:block;margin-bottom:14px}
+  .field span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .inrow{display:flex;gap:8px}
+  input[type=number],select{
+    width:100%;background:var(--panel-2);border:1px solid var(--line-strong);
+    color:var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;
+    font-family:"IBM Plex Mono",monospace;
+  }
+  input[type=number]:focus,select:focus{
+    outline:none;border-color:var(--sc);box-shadow:0 0 0 3px rgba(55,229,212,.16);
+  }
+  select{cursor:pointer;font-family:"Inter",sans-serif}
+  button{
+    font-family:"Inter",sans-serif;font-weight:600;cursor:pointer;
+    border-radius:10px;border:1px solid transparent;transition:.15s;
+  }
+  .btn-primary{
+    background:var(--sc);color:#04201D;width:100%;padding:13px;font-size:15px;
+    margin-top:6px;
+  }
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;filter:none}
+
+  .progress-bar{
+    width:100%;height:4px;border-radius:2px;background:var(--panel-2);
+    overflow:hidden;margin-top:10px;display:none;
+  }
+  .progress-bar-fill{height:100%;background:var(--sc);transition:width .3s}
+  .status{color:var(--muted);font-size:13px;margin-top:10px;min-height:18px}
+
+  /* Stats */
+  .inv-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;display:none}
+  .inv-stat{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 16px;text-align:center;flex:1;min-width:90px;
+  }
+  .inv-stat b{display:block;font-family:"IBM Plex Mono",monospace;font-size:20px;color:var(--sc)}
+  .inv-stat small{color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;margin-top:12px}
+  .inv-table{
+    width:100%;border-collapse:collapse;font-size:13px;
+    font-family:"IBM Plex Mono",monospace;
+  }
+  .inv-table th{
+    text-align:left;padding:10px 10px;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line-strong);
+    font-family:"Inter",sans-serif;white-space:nowrap;
+  }
+  .inv-table td{padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .inv-table tr:hover td{background:rgba(55,229,212,.04)}
+  .inv-table .rank{color:var(--sc);font-weight:600;font-size:16px}
+  .inv-table .formula{color:var(--ink);font-weight:600;font-size:14px}
+  .check-pass{color:var(--sc)}
+  .check-fail{color:var(--danger)}
+  .novel-yes{color:var(--sc)}
+  .novel-no{color:var(--warm)}
+
+  .expand-row{display:none}
+  .expand-row.open{display:table-row}
+  .expand-cell{padding:16px 12px;background:var(--panel-2)}
+  .expand-detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12px}
+  @media(max-width:600px){.expand-detail{grid-template-columns:1fr}}
+  .expand-detail dt{color:var(--muted);margin:0}
+  .expand-detail dd{color:var(--ink);margin:0 0 6px}
+
+  .placeholder{color:var(--muted);text-align:center;padding:50px 20px;font-size:14px}
+
+  .note{color:var(--faint);font-size:12px;margin-top:24px;line-height:1.6}
+  a{color:var(--sc)}
+  .banner{
+    display:none;background:rgba(255,107,107,.1);border:1px solid var(--danger);
+    color:#ffd7d7;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:14px;
+  }
+
+  .workflow{
+    margin-top:24px;padding:18px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:var(--radius);font-size:12px;
+    color:var(--muted);line-height:1.8;
+  }
+  .workflow b{color:var(--ink)}
+  .workflow .arrow{color:var(--sc);margin:0 6px}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Inverse design · machine learning</p>
+    <h1><span class="accent">Inverse Design</span> for predicting<br>high-Tc HES compositions</h1>
+    <p>Enter a target critical temperature and let the pipeline screen 672 equimolar
+       high-entropy alloy compositions, verify each through 5 independent checks,
+       and return the top candidates most likely to superconduct near your target.</p>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="workflow">
+    <b>Workflow:</b>
+    User enters Tc<sub>target</sub>
+    <span class="arrow">→</span> Enumerate 672 HEA compositions (4–6 elements from 10 refractory metals)
+    <span class="arrow">→</span> <b>Stage 1:</b> Phase stability filter (P(BCC) ≥ 0.7)
+    <span class="arrow">→</span> <b>Stage 2:</b> 6-model Tc prediction
+    <span class="arrow">→</span> <b>5-check verification gate</b> (phase, agreement, bounds, VEC, novelty)
+    <span class="arrow">→</span> Score, rank, return top 10
+  </div>
+
+  <div class="grid" style="margin-top:24px">
+    <!-- Controls -->
+    <section class="panel">
+      <h2>Search Parameters</h2>
+
+      <label class="field">
+        <span>Target Tc (K)</span>
+        <input id="inv-tc" type="number" value="8.0" step="0.5" min="0.1" max="300" />
+      </label>
+
+      <label class="field">
+        <span>Search mode</span>
+        <select id="inv-mode">
+          <option value="target">Target — closest to Tc</option>
+          <option value="maximize">Maximize — highest Tc</option>
+          <option value="range">Range — all within bounds</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Tc bounds (min — max, K)</span>
+        <div class="inrow">
+          <input id="inv-tcmin" type="number" value="5.0" step="1" min="0.1" max="300" />
+          <input id="inv-tcmax" type="number" value="30.0" step="1" min="0.1" max="300" />
+        </div>
+      </label>
+
+      <label class="field">
+        <span>P(BCC) threshold</span>
+        <input id="inv-pbcc" type="number" value="0.7" step="0.05" min="0.5" max="0.95" />
+      </label>
+
+      <label class="field">
+        <span>Max model disagreement σ (K)</span>
+        <input id="inv-sigma" type="number" value="2.0" step="0.5" min="0.5" max="3.0" />
+      </label>
+
+      <label class="field">
+        <span>VEC range</span>
+        <div class="inrow">
+          <input id="inv-vecmin" type="number" value="3.5" step="0.5" min="3.0" max="5.0" />
+          <input id="inv-vecmax" type="number" value="7.5" step="0.5" min="6.0" max="8.5" />
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Element count per alloy</span>
+        <select id="inv-nelements" multiple style="height:72px">
+          <option value="4" selected>4 elements</option>
+          <option value="5" selected>5 elements</option>
+          <option value="6" selected>6 elements</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Number of results</span>
+        <input id="inv-nresults" type="number" value="10" min="1" max="50" />
+      </label>
+
+      <button class="btn-primary" id="inv-run">Run Inverse Design</button>
+      <div class="progress-bar" id="inv-progress">
+        <div class="progress-bar-fill" id="inv-progress-fill" style="width:0%"></div>
+      </div>
+      <div class="status" id="inv-status">Ready. Configure parameters and run.</div>
+    </section>
+
+    <!-- Results -->
+    <section class="panel" style="overflow:hidden">
+      <h2>Verified Candidates</h2>
+      <div class="inv-stats" id="inv-stats"></div>
+      <div class="table-wrap" id="inv-results">
+        <p class="placeholder">
+          Screen the HEA composition space for verified superconducting candidates.<br>
+          All displayed results pass 5 independent checks before appearing here.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <p class="note">
+    <b>Element pool:</b> Nb, Ta, Ti, Zr, Hf, V, Mo, W, Re, Ru (10 refractory HES elements).<br>
+    <b>Models:</b> Extra Trees, Random Forest, XGBoost, Gradient Boosting, SVR, KNN.<br>
+    <b>Phase classifier:</b> 11,247 training samples (Peivaste et al. 2023), 96% BCC accuracy.<br>
+    <b>Tc predictor:</b> 3,319 samples, R² = 0.87 (best single model).<br><br>
+    Predictions are ML model outputs — not measured values. Use as a guide for experimental priorities.
+    <br><br>
+    <a href="../hes-tc-predictor/index.html">← Forward Tc Predictor</a> &nbsp;|&nbsp;
+    <a href="../machine-learning.html">Machine Learning</a>
+  </p>
+</div>
+
+<script>
+const API_BASE = "https://ml-project-sfos.onrender.com";
+const $ = id => document.getElementById(id);
+
+function showBanner(msg){
+  const b = $("banner"); b.innerHTML = msg; b.style.display = "block";
+}
+
+$("inv-run").onclick = async () => {
+  const btn = $("inv-run");
+  btn.disabled = true; btn.textContent = "Screening…";
+  $("inv-status").textContent = "Enumerating compositions and running verification…";
+  $("inv-progress").style.display = "block";
+  $("inv-progress-fill").style.width = "30%";
+
+  const nElements = Array.from($("inv-nelements").selectedOptions).map(o => parseInt(o.value));
+
+  const body = {
+    tc_target: parseFloat($("inv-tc").value),
+    tc_min: parseFloat($("inv-tcmin").value),
+    tc_max: parseFloat($("inv-tcmax").value),
+    mode: $("inv-mode").value,
+    p_bcc_threshold: parseFloat($("inv-pbcc").value),
+    max_sigma: parseFloat($("inv-sigma").value),
+    vec_min: parseFloat($("inv-vecmin").value),
+    vec_max: parseFloat($("inv-vecmax").value),
+    n_results: parseInt($("inv-nresults").value),
+    n_elements: nElements,
+  };
+
+  try{
+    $("inv-progress-fill").style.width = "60%";
+    const r = await fetch(`${API_BASE}/inverse`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body),
+    });
+    $("inv-progress-fill").style.width = "90%";
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.detail || "Inverse design failed");
+    $("inv-progress-fill").style.width = "100%";
+    renderResults(j);
+    $("inv-status").textContent =
+      `Done in ${j.elapsed_seconds}s. ${j.passed_all_checks} candidates passed all 5 verification checks.`;
+  }catch(e){
+    $("inv-status").textContent = "Error: " + e.message;
+    $("inv-results").innerHTML = `<p style="color:var(--danger);text-align:center;padding:30px">${e.message}</p>`;
+  }finally{
+    btn.disabled = false; btn.textContent = "Run Inverse Design";
+    setTimeout(() => { $("inv-progress").style.display = "none"; }, 800);
+  }
+};
+
+function renderResults(data){
+  const stats = $("inv-stats");
+  stats.style.display = "flex";
+  stats.innerHTML = [
+    ["Screened", data.screened],
+    ["Phase Gate", data.passed_phase],
+    ["Verified", data.passed_all_checks],
+    ["Shown", data.results.length],
+    ["Time", data.elapsed_seconds + "s"],
+  ].map(([l,v]) => `<div class="inv-stat"><b>${v}</b><small>${l}</small></div>`).join("");
+
+  if(!data.results.length){
+    const msg = data.mode === "target"
+      ? `No candidates found with predicted Tc within ±${data.tc_window} K of ${data.tc_target} K. `
+        + `The current element pool does not produce verified alloys in this temperature range. `
+        + `Try: widening the Tc window, changing the target, or switching to "Range" mode.`
+      : `No candidates passed all verification checks. Try relaxing thresholds (lower P(BCC), higher σ, wider VEC range).`;
+    $("inv-results").innerHTML = `<p style="color:var(--warm);text-align:center;padding:30px">${msg}</p>`;
+    return;
+  }
+
+  let html = `<table class="inv-table"><thead><tr>
+    <th>#</th><th>Formula</th><th>Tc (K)</th><th>± (K)</th>
+    <th>P(BCC)</th><th>VEC</th><th>Score</th><th>Reliability</th><th>Novel</th><th></th>
+  </tr></thead><tbody>`;
+
+  data.results.forEach((r, i) => {
+    const ph = r.physics || {};
+    const relColor = ph.level === "high" ? "var(--sc)" : ph.level === "medium" ? "var(--warm)" : "var(--danger)";
+    const relLabel = ph.reliability !== undefined ? `${(ph.reliability*100).toFixed(0)}%` : "—";
+
+    html += `<tr class="data-row" data-idx="${i}" style="cursor:pointer">
+      <td class="rank">${r.rank}</td>
+      <td class="formula">${r.formula}</td>
+      <td>${r.tc_mean.toFixed(2)}</td>
+      <td>${r.tc_std.toFixed(2)}</td>
+      <td>${r.p_bcc.toFixed(3)}</td>
+      <td>${r.vec.toFixed(1)}</td>
+      <td>${r.score.toFixed(3)}</td>
+      <td style="color:${relColor};font-weight:600">${relLabel}</td>
+      <td class="${r.is_novel?'novel-yes':'novel-no'}">${r.is_novel?'&#10003; Novel':'&#10007; Known'}</td>
+      <td style="color:var(--muted)" class="toggle">&#9660;</td>
+    </tr>`;
+
+    const models = Object.entries(r.model_predictions||{})
+      .map(([k,v]) => `<dd>${k}: ${v.toFixed(3)} K</dd>`).join("");
+
+    const flags = (ph.flags || []).map(f => `<dd style="color:var(--muted)">• ${f}</dd>`).join("");
+
+    html += `<tr class="expand-row" id="exp-${i}">
+      <td colspan="10" class="expand-cell"><div class="expand-detail">
+        <dl>
+          <dt>Composition</dt><dd>${r.formula} (${r.n_elements} elements, equimolar)</dd>
+          <dt>VEC</dt><dd>${r.vec.toFixed(2)} (optimum: 4.67)</dd>
+          <dt>&#948; (size mismatch)</dt><dd>${r.delta.toFixed(2)}%</dd>
+          <dt>P(BCC)</dt><dd>${(r.p_bcc*100).toFixed(1)}%</dd>
+          <dt>95% CI</dt><dd>${r.tc_95_lo.toFixed(2)} &ndash; ${r.tc_95_hi.toFixed(2)} K</dd>
+          <dt>Nb fraction</dt><dd>${ph.nb_fraction !== undefined ? (ph.nb_fraction*100).toFixed(1)+'%' : '—'}</dd>
+          <dt>Nb+Ta fraction</dt><dd>${ph.nb_ta_fraction !== undefined ? (ph.nb_ta_fraction*100).toFixed(1)+'%' : '—'}</dd>
+        </dl>
+        <dl>
+          <dt>Model Predictions</dt>${models}
+          <dt>Nearest Training</dt><dd>${r.nearest_training||'N/A'} (element distance = ${r.nearest_dist})</dd>
+          <dt>Physics Assessment</dt>
+          <dd style="color:${relColor};font-weight:600">${ph.level ? ph.level.toUpperCase() : '—'} reliability (${relLabel})</dd>
+          ${flags}
+        </dl>
+      </div></td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  $("inv-results").innerHTML = html;
+
+  document.querySelectorAll(".data-row").forEach(row => {
+    row.onclick = () => {
+      const idx = row.dataset.idx;
+      const detail = document.getElementById("exp-" + idx);
+      detail.classList.toggle("open");
+      row.querySelector(".toggle").innerHTML = detail.classList.contains("open") ? "&#9650;" : "&#9660;";
+    };
+  });
+}
+
+// Verify API is reachable
+fetch(`${API_BASE}/health`).then(r => {
+  if(!r.ok) throw new Error();
+}).catch(() => {
+  showBanner(`Cannot reach backend at <code>${API_BASE}</code>. The server may be starting up (cold start ~30s on Render free tier). Try again shortly.`);
+});
+</script>
+</body>
+</html>
