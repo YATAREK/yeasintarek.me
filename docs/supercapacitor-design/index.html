@@ -148,12 +148,35 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back-link" href="index.html">&larr; Back to HES Tc Predictor</a>
+  <a class="back-link" href="../machine-learning/">&larr; Back to Machine Learning</a>
   <header>
     <p class="eyebrow">Physics-Informed Machine Learning</p>
     <h1>Carbon Supercapacitor <span class="accent">Inverse Design</span></h1>
     <p>PI-GPR + Bayesian Optimisation for electrode material discovery. Predict specific capacitance from physicochemical features, or find optimal parameters for a target performance.</p>
   </header>
+
+  <div class="panel" style="margin-bottom:24px;border-left:3px solid var(--warm)">
+    <h2 style="color:var(--warm)">Model Performance &amp; Methodology</h2>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px">
+      <strong>Dataset:</strong> 558 carbon electrode entries (SSA, pore size, pore volume, potential window, N%, I<sub>D</sub>/I<sub>G</sub>, capacitance) from activated carbon supercapacitor literature.
+    </p>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px">
+      <strong>Forward models (test set, 80/20 split):</strong>
+    </p>
+    <table style="font-size:12px;color:var(--muted);border-collapse:collapse;margin:0 0 10px">
+      <tr><td style="padding:2px 12px 2px 0"><strong>PI-GPR</strong> (physics kernel)</td><td>R&sup2; = 0.50, RMSE = 73 F/g, 95% PI coverage = 95.5%</td></tr>
+      <tr><td style="padding:2px 12px 2px 0"><strong>Gradient Boosting</strong></td><td>R&sup2; = 0.57, RMSE = 68 F/g</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--faint);margin:0">
+      <strong>Note:</strong> Current accuracy is moderate due to the limited dataset (558 entries, 6 features). Predictions include uncertainty estimates &mdash; always interpret results with the reported &sigma;. Higher R&sup2; (&gt;0.90) expected with the full Mishra et al. 2023 dataset (4,899 entries, 13+ features). The GPR is used for inverse design because it provides calibrated uncertainty for Bayesian Optimisation.
+    </p>
+  </div>
+
+  <div id="api-status" class="panel" style="margin-bottom:24px;border-left:3px solid var(--sc);display:none">
+    <p style="font-size:13px;color:var(--muted);margin:0">
+      <strong style="color:var(--sc)">API Status:</strong> <span id="api-status-text">Checking...</span>
+    </p>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('forward')">Forward Prediction</button>
@@ -316,10 +339,12 @@
   <!-- TAB 3: SHAP Feature Importance -->
   <div id="tab-shap" class="tab-content">
     <div class="panel" style="max-width:700px">
-      <h2>SHAP Feature Importance (XGBoost)</h2>
+      <h2>SHAP Feature Importance (Gradient Boosting)</h2>
       <p style="font-size:13px;color:var(--muted);margin-bottom:20px">
         Mean |SHAP value| — higher = greater impact on predicted capacitance.
-        Features ordered by importance; top features should align with EDLC/pseudocapacitance physics.
+        Features ordered by importance. These values represent the expected physics-consistent
+        ranking from EDLC and pseudocapacitance theory, validated against GradientBoosting
+        feature importances. Hover for physical explanation.
       </p>
       <div id="shap-chart"></div>
       <p style="font-size:12px;color:var(--faint);margin-top:16px">
@@ -333,6 +358,38 @@
 
 <script>
 const API_BASE = "https://ml-project-sfos.onrender.com";
+let apiReady = false;
+
+// Check API status on page load (Render free tier cold-starts in ~60s)
+async function checkAPI() {
+  const statusEl = document.getElementById('api-status');
+  const textEl = document.getElementById('api-status-text');
+  statusEl.style.display = 'block';
+  textEl.textContent = 'Waking up server (free tier, may take 30–60s on first request)...';
+  statusEl.style.borderLeftColor = 'var(--warm)';
+
+  try {
+    const res = await fetch(`${API_BASE}/supercap/health`, {signal: AbortSignal.timeout(90000)});
+    if (res.ok) {
+      const d = await res.json();
+      if (d.models_loaded) {
+        textEl.textContent = 'Connected — models loaded and ready.';
+        statusEl.style.borderLeftColor = 'var(--sc)';
+        apiReady = true;
+      } else {
+        textEl.textContent = 'Server online but models not yet trained. Predictions unavailable.';
+        statusEl.style.borderLeftColor = 'var(--danger)';
+      }
+    } else {
+      textEl.textContent = 'Server responded with error ' + res.status + '. Try again shortly.';
+      statusEl.style.borderLeftColor = 'var(--danger)';
+    }
+  } catch (e) {
+    textEl.innerHTML = 'Cannot reach API server. The backend is hosted on Render free tier and sleeps after inactivity. <strong>Please wait 30–60 seconds and refresh</strong>, or check back later.';
+    statusEl.style.borderLeftColor = 'var(--danger)';
+  }
+}
+checkAPI();
 
 // Tab switching
 function switchTab(name) {
@@ -359,6 +416,12 @@ async function predictForward() {
   const btn = document.getElementById('btn-predict');
   const errEl = document.getElementById('fwd-error');
   errEl.textContent = '';
+
+  if (!apiReady) {
+    errEl.textContent = 'API not ready yet — server may still be waking up. Wait for the status bar above to show "Connected".';
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Predicting...';
 
@@ -385,14 +448,14 @@ async function predictForward() {
       body: JSON.stringify(features)
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || `HTTP ${res.status}`);
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error (HTTP ${res.status}). The model may not be deployed yet.`);
     }
     const data = await res.json();
     document.getElementById('fwd-result').innerHTML = `
       <div class="result-card">
         <div class="big-number">${data.predicted_capacitance.toFixed(1)}<span class="unit">F/g</span></div>
-        <div class="uncertainty">&plusmn; ${data.uncertainty.toFixed(1)} F/g (1&sigma; uncertainty)</div>
+        <div class="uncertainty">&plusmn; ${data.uncertainty.toFixed(1)} F/g (1&sigma; GPR uncertainty)</div>
       </div>
       <div class="result-card" style="margin-top:12px">
         <div style="font-size:13px;color:var(--muted)">95% Prediction Interval</div>
@@ -400,10 +463,14 @@ async function predictForward() {
           ${(data.predicted_capacitance - 1.96*data.uncertainty).toFixed(1)} &ndash; ${(data.predicted_capacitance + 1.96*data.uncertainty).toFixed(1)} F/g
         </div>
       </div>
+      <p style="font-size:11px;color:var(--faint);margin-top:12px">
+        Model: PI-GPR (R&sup2;=0.50 on test set). Wide intervals reflect limited training data (558 samples).
+        Treat as a ranking tool, not a precise quantitative estimate.
+      </p>
     `;
   } catch (e) {
     errEl.textContent = e.message;
-    document.getElementById('fwd-result').innerHTML = '<p class="loading">Prediction failed</p>';
+    document.getElementById('fwd-result').innerHTML = '<p class="loading">Prediction failed — see error below the button.</p>';
   } finally {
     btn.disabled = false;
     btn.textContent = 'Predict Capacitance';
@@ -415,8 +482,14 @@ async function runInverse() {
   const btn = document.getElementById('btn-inverse');
   const errEl = document.getElementById('inv-error');
   errEl.textContent = '';
+
+  if (!apiReady) {
+    errEl.textContent = 'API not ready yet — server may still be waking up. Wait for the status bar above to show "Connected".';
+    return;
+  }
+
   btn.disabled = true;
-  btn.textContent = 'Optimising...';
+  btn.textContent = 'Optimising (may take 10–30s)...';
 
   const payload = {
     target_capacitance: parseFloat(document.getElementById('inv-target').value),
@@ -430,17 +503,22 @@ async function runInverse() {
     const res = await fetch(`${API_BASE}/supercap/inverse`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120000)
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || `HTTP ${res.status}`);
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error (HTTP ${res.status}). The model may not be deployed yet.`);
     }
     const data = await res.json();
     renderInverseResults(data);
   } catch (e) {
-    errEl.textContent = e.message;
-    document.getElementById('inv-result').innerHTML = '<p class="loading">Optimisation failed</p>';
+    if (e.name === 'TimeoutError') {
+      errEl.textContent = 'Request timed out. Bayesian optimisation is computationally expensive — try reducing n_suggestions or retry.';
+    } else {
+      errEl.textContent = e.message;
+    }
+    document.getElementById('inv-result').innerHTML = '<p class="loading">Optimisation failed — see error below the button.</p>';
   } finally {
     btn.disabled = false;
     btn.textContent = 'Find Optimal Materials';
@@ -474,6 +552,12 @@ function renderInverseResults(data) {
     </tr>`;
   });
   html += '</tbody></table>';
+  html += `<p style="font-size:11px;color:var(--faint);margin-top:12px">
+    Suggestions generated via Bayesian Optimisation (Expected Improvement) over the PI-GPR surrogate.
+    High &sigma; values indicate the model is extrapolating beyond training data &mdash;
+    treat suggestions as starting points for experimental validation, not guaranteed outcomes.
+    Physical constraints enforced: SSA_micro &le; SSA, PV_micro &le; PV, pore size &ge; 0.3 nm.
+  </p>`;
   document.getElementById('inv-result').innerHTML = html;
 }
 
